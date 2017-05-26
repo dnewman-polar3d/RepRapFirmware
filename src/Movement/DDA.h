@@ -12,7 +12,7 @@
 #include "DriveMovement.h"
 #include "GCodes/GCodes.h"			// for class RawMove
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 #define DDA_LOG_PROBE_CHANGES	1
 #else
 #define DDA_LOG_PROBE_CHANGES	0		// save memory on the wired Duet
@@ -77,7 +77,7 @@ public:
 	// the calculation can just be managed in time at speeds of 15000mm/min (step interval 50us), but not at 20000mm/min (step interval 37.5us).
 	// Therefore, where the step interval falls below 60us, we don't calculate on every step.
 	// Note: the above measurements were taken some time ago, before some firmware optimisations.
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	static const int32_t MinCalcIntervalDelta = (40 * stepClockRate)/1000000; 		// the smallest sensible interval between calculations (40us) in step timer clocks
 	static const int32_t MinCalcIntervalCartesian = (40 * stepClockRate)/1000000;	// same as delta for now, but could be lower
 	static const uint32_t minInterruptInterval = 6;					// about 2us minimum interval between interrupts, in clocks

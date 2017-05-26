@@ -34,14 +34,14 @@
 #include "RepRap.h"
 #include "Tool.h"
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 #include "FirmwareUpdater.h"
 #endif
 
-const char GCodes::axisLetters[MAX_AXES] = { 'X', 'Y', 'Z', 'U', 'V', 'W' };
+const char GCodes::axisLetters[MAX_AXES] = MOTION_DRIVES_( 'X', 'Y', 'Z', 'U', 'V', 'W' );
 
 const char* const PAUSE_G = "pause.g";
-const char* const HomingFileNames[MAX_AXES] = { "homex.g", "homey.g", "homez.g", "homeu.g", "homev.g", "homew.g" };
+const char* const HomingFileNames[MAX_AXES] = MOTION_DRIVES_( "homex.g", "homey.g", "homez.g", "homeu.g", "homev.g", "homew.g" );
 const char* const HOME_ALL_G = "homeall.g";
 const char* const HOME_DELTA_G = "homedelta.g";
 const char* const DefaultHeightMapFile = "heightmap.csv";
@@ -423,7 +423,7 @@ void GCodes::Spin()
 			break;
 
 		case GCodeState::flashing1:
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 			// Update additional modules before the main firmware
 			if (FirmwareUpdater::IsReady())
 			{

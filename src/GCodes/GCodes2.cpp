@@ -20,7 +20,7 @@
 #include "Tool.h"
 #include "Version.h"
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 # include "FirmwareUpdater.h"
 #endif
 
@@ -3142,7 +3142,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, StringRef& reply)
 		reprap.GetNetwork().ReportProtocols(reply);
 		break;
 
-#ifdef DUET_WIFI
+#if defined(DUET_WIFI) || defined(BOARDX)
 	case 587:	// Add WiFi network or list remembered networks
 		if (gb.SeenAfterSpace('S'))
 		{
@@ -3772,7 +3772,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, StringRef& reply)
 			}
 
 			// Check prerequisites of all modules to be updated, if any are not met then don't update any of them
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 			if (!FirmwareUpdater::CheckFirmwareUpdatePrerequisites(firmwareUpdateModuleMap))
 			{
 				firmwareUpdateModuleMap = 0;

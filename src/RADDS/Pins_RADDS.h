@@ -36,6 +36,7 @@ const int8_t HEATERS = 4;
 const size_t MAX_AXES = 6;						// The maximum number of movement axes in the machine, usually just X, Y and Z, <= DRIVES
 const size_t MIN_AXES = 3;						// The minimum and default number of axes
 const size_t MaxExtruders = DRIVES - MIN_AXES;	// The maximum number of extruders
+#define MOTION_DRIVES_(a,b,c,d,e,f) { a,b,c,d,e,f }
 
 const size_t NUM_SERIAL_CHANNELS = 2;
 // Use TX0/RX0 for the auxiliary serial line

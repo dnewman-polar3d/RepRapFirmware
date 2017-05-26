@@ -4,9 +4,9 @@
 #if defined(DUET_WIFI)
 
 # define FIRMWARE_NAME "RepRapFirmware for Duet WiFi"
-# define DEFAULT_BOARD_TYPE BoardType::AzteegX7Mini_10
+# define DEFAULT_BOARD_TYPE BoardType::AX7_10
 const size_t NumFirmwareUpdateModules = 4;		// 3 modules, plus one for manual upload to WiFi module
-# define IAP_FIRMWARE_FILE	"AzteegX7MiniFirmware.bin"
+# define IAP_FIRMWARE_FILE	"AX7Firmware.bin"
 # define WIFI_FIRMWARE_FILE	"DuetWiFiServer.bin"
 # define WIFI_WEB_FILE		"DuetWebControl.bin"
 #else

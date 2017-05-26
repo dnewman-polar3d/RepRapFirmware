@@ -53,7 +53,7 @@ Licence: GPL
 #if defined(DUET_NG)
 # include "DueXn.h"
 #elif !defined(__RADDS__)
-# include "MCP4461/MCP4461.h"
+# include "MCP4461.h"
 #endif
 
 const bool FORWARDS = true;
@@ -84,8 +84,8 @@ const float INSTANT_DVS[DRIVES] = DRIVES_(15.0, 15.0, 0.2, 2.0, 2.0, 2.0, 2.0, 2
 
 // AXES
 
-const float AXIS_MINIMA[MAX_AXES] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };			// mm
-const float AXIS_MAXIMA[MAX_AXES] = { 230.0, 210.0, 200.0, 0.0, 0.0, 0.0 };		// mm
+const float AXIS_MINIMA[MAX_AXES] = MOTION_DRIVES_( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 );			// mm
+const float AXIS_MAXIMA[MAX_AXES] = MOTION_DRIVES_( 230.0, 210.0, 200.0, 0.0, 0.0, 0.0 );	// mm
 
 // Z PROBE
 
@@ -125,6 +125,8 @@ enum class BoardType : uint8_t
 	DuetWiFi_10 = 1
 #elif defined(DUET_NG) && defined(DUET_ETHERNET)
 	DuetEthernet_10 = 1
+#elif defined(BOARDX) && defined(AX7)
+    AX7_10 = 1
 #elif defined(__RADDS__)
 	RADDS_15 = 1
 #else
@@ -541,7 +543,7 @@ public:
 
 	float GetFanValue(size_t fan) const;					// Result is returned in percent
 	void SetFanValue(size_t fan, float speed);				// Accepts values between 0..1 and 1..255
-#ifndef DUET_NG
+#if !defined(DUET_NG) && !defined(BOARDX)
 	void EnableSharedFan(bool enable);						// enable/disable the fan that shares its PWM pin with the last heater
 #endif
 	float GetFanRPM();
@@ -612,7 +614,7 @@ private:
 	{
 		static const uint16_t versionValue = 7;		// increment this whenever this struct changes
 		static const uint16_t magicValue = 0x7D00 | versionValue;	// value we use to recognise that all the flash data has been written
-#ifndef DUET_NG
+#if !defined(DUET_NG) && !defined(BOARDX)
 		static const uint32_t nvAddress = 0;		// must be 4-byte aligned
 #endif
 		static const size_t numberOfSlots = 5;		// number of storage slots used to implement wear levelling - must fit in 512 bytes
@@ -642,7 +644,7 @@ private:
 		}
 	};
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	static_assert(SoftwareResetData::numberOfSlots * sizeof(SoftwareResetData) <= 512, "Can't fit software reset data in SAM4E user signature area");
 #else
 	static_assert(SoftwareResetData::numberOfSlots * sizeof(SoftwareResetData) <= FLASH_DATA_LENGTH, "NVData too large");
@@ -710,6 +712,7 @@ private:
 	// Digipots
 	MCP4461 mcpDuet;
 	MCP4461 mcpExpansion;
+	// TODO BOARDX??? drop to 4?
 	Pin potWipes[8];								// we have only 8 digipots, on the Duet 0.8.5 we use the DAC for the 9th
 	float senseResistor;
 	float maxStepperDigipotVoltage;
@@ -1250,7 +1253,7 @@ inline OutputBuffer *Platform::GetAuxGCodeReply()
 inline float Platform::AdcReadingToCpuTemperature(uint16_t adcVal) const
 {
 	float voltage = (float)adcVal * (3.3/4096.0);
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	return (voltage - 1.44) * (1000.0/4.7) + 27.0 + mcuTemperatureAdjust;			// accuracy at 27C is +/-13C
 #else
 	return (voltage - 0.8) * (1000.0/2.65) + 27.0 + mcuTemperatureAdjust;			// accuracy at 27C is +/-45C
@@ -1272,6 +1275,8 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 //	Step pins are PA0, PC7,9,11,14,25,29 and PD0,3.
 //	The PC and PD bit numbers don't overlap, so we use their actual positions.
 //	PA0 clashes with PD0, so we use bit 1 to represent PA0.
+// BOARDX AX7
+//  All step pins are on port D, so the bitmap is just the map of bits in port D.
 // RADDS:
 //	Step pins are distributed over all 4 ports, but they are in different bit positions except for port C
 
@@ -1280,6 +1285,8 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 {
 	const PinDescription& pinDesc = g_APinDescription[STEP_PINS[driver]];
 #if defined(DUET_NG)
+	return pinDesc.ulPin;
+#elif defined(BOARDX) && defined(AX7)
 	return pinDesc.ulPin;
 #elif defined(__RADDS__)
 	return (pinDesc.pPort == PIOC) ? pinDesc.ulPin << 1 : pinDesc.ulPin;
@@ -1295,6 +1302,8 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 {
 #if defined(DUET_NG)
 	PIOD->PIO_ODSR = driverMap;				// on Duet WiFi all step pins are on port D
+#elif defined(BOARDX) && defined(AX7)
+	PIOD->PIO_ODSR = driverMap;
 #elif defined(__RADDS__)
 	PIOA->PIO_ODSR = driverMap;
 	PIOB->PIO_ODSR = driverMap;
@@ -1314,6 +1323,8 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 {
 #if defined(DUET_NG)
 	PIOD->PIO_ODSR = 0;						// on Duet WiFi all step pins are on port D
+#elif defined(BOARDX) && defined(AX7)
+	PIOD->PIO_ODSR = 0;
 #elif defined(__RADDS__)
 	PIOD->PIO_ODSR = 0;
 	PIOC->PIO_ODSR = 0;

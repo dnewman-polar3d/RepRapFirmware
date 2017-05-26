@@ -38,6 +38,10 @@
 # include "FirmwareUpdater.h"
 #endif
 
+#ifdef BOARDX
+#  include  "FirmwareUpdater.h"
+#endif
+
 #include <climits>
 #include <malloc.h>
 
@@ -64,7 +68,10 @@ const int Heater0LogicalPin = 0;
 const int Fan0LogicalPin = 20;
 const int EndstopXLogicalPin = 40;
 const int Special0LogicalPin = 60;
+
+#ifdef DUET_NG
 const int DueX5Gpio0LogicalPin = 100;
+#endif
 
 //#define MOVE_DEBUG
 
@@ -266,6 +273,7 @@ void Platform::Init()
 	ARRAY_INIT(netMask, DefaultNetMask);
 	ARRAY_INIT(gateWay, DefaultGateway);
 
+// TODO BOARDX ???
 #if defined(DUET_NG) && defined(DUET_WIFI)
 	memset(macAddress, 0xFF, sizeof(macAddress));
 #else
@@ -305,7 +313,7 @@ void Platform::Init()
 	ARRAY_INIT(instantDvs, INSTANT_DVS);
 	maxPrintingAcceleration = maxTravelAcceleration = 10000.0;
 
-#if !defined(DUET_NG) && !defined(__RADDS__)
+#if !defined(DUET_NG) && !defined(__RADDS__) && !defined(BOARDX)
 	// Motor current setting on Duet 0.6 and 0.8.5
 	ARRAY_INIT(potWipes, POT_WIPES);
 	senseResistor = SENSE_RESISTOR;
@@ -353,7 +361,7 @@ void Platform::Init()
 			axisDrivers[drive].numDrivers = 1;
 			axisDrivers[drive].driverNumbers[0] = (uint8_t)drive;
 			endStopType[drive] =
-#if defined(DUET_NG) || defined(__RADDS__)
+#if defined(DUET_NG) || defined(__RADDS__) || defined(BOARDX)
 									EndStopType::lowEndStop;	// default to low endstop
 #else
 									(drive == Y_AXIS)
@@ -432,7 +440,7 @@ void Platform::Init()
 	extrusionAncilliaryPwmLogicalPin = Fan0LogicalPin;
 	extrusionAncilliaryPwmFirmwarePin = COOLING_FAN_PINS[0];
 	extrusionAncilliaryPwmInvert =
-#if defined(DUET_NG) || defined(__RADDS__)
+#if defined(DUET_NG) || defined(__RADDS__) || defined(BOARDX)
 			false;
 #else
 			(board == BoardType::Duet_06 || board == BoardType::Duet_07);
@@ -588,7 +596,7 @@ void Platform::InitZProbe()
 	zProbeOnFilter.Init(0);
 	zProbeOffFilter.Init(0);
 
-#if defined(DUET_NG) || defined(__RADDS__)
+#if defined(DUET_NG) || defined(__RADDS__) || defined(BOARDX)
 	zProbeModulationPin = Z_PROBE_MOD_PIN;
 #else
 	zProbeModulationPin = (board == BoardType::Duet_07 || board == BoardType::Duet_085) ? Z_PROBE_MOD_PIN07 : Z_PROBE_MOD_PIN;
@@ -1291,7 +1299,7 @@ void Platform::SoftwareReset(uint16_t reason, const uint32_t *stk)
 			{
 				reason |= (uint16_t)SoftwareResetReason::inUsbOutput;	// if we are resetting because we are stuck in a Spin function, record whether we are trying to send to USB
 			}
-#if !defined(DUET_NG) && !defined(__RADDS__)
+#if !defined(DUET_NG) && !defined(__RADDS__) && !defined(BOARDX)
 			if (reprap.GetNetwork().InLwip())
 			{
 				reason |= (uint16_t)SoftwareResetReason::inLwipSpin;
@@ -1313,7 +1321,7 @@ void Platform::SoftwareReset(uint16_t reason, const uint32_t *stk)
 		size_t slot = SoftwareResetData::numberOfSlots;
 		SoftwareResetData srdBuf[SoftwareResetData::numberOfSlots];
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 		if (flash_read_user_signature(reinterpret_cast<uint32_t*>(srdBuf), sizeof(srdBuf)/sizeof(uint32_t)) == FLASH_RC_OK)
 #else
 		DueFlashStorage::read(SoftwareResetData::nvAddress, srdBuf, sizeof(srdBuf));
@@ -1328,7 +1336,7 @@ void Platform::SoftwareReset(uint16_t reason, const uint32_t *stk)
 		if (slot == SoftwareResetData::numberOfSlots)
 		{
 			// No free slots, so erase the area
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 			flash_erase_user_signature();
 #endif
 			memset(srdBuf, 0xFF, sizeof(srdBuf));
@@ -1351,7 +1359,7 @@ void Platform::SoftwareReset(uint16_t reason, const uint32_t *stk)
 		}
 
 		// Save diagnostics data to Flash
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 		flash_write_user_signature(srdBuf, sizeof(srdBuf)/sizeof(uint32_t));
 #else
 		DueFlashStorage::write(SoftwareResetData::nvAddress, srdBuf, sizeof(srdBuf));
@@ -1366,7 +1374,7 @@ void Platform::SoftwareReset(uint16_t reason, const uint32_t *stk)
 //*****************************************************************************************************************
 // Interrupts
 
-#ifndef DUET_NG
+#if !defined(DUET_NG) && !defined(BOARDX)
 void NETWORK_TC_HANDLER()
 {
 	tc_get_status(NETWORK_TC, NETWORK_TC_CHAN);
@@ -1391,7 +1399,7 @@ void Platform::InitialiseInterrupts()
 	// Set the tick interrupt to the highest priority. We need to to monitor the heaters and kick the watchdog.
 	NVIC_SetPriority(SysTick_IRQn, 0);						// set priority for tick interrupts - highest, because it kicks the watchdog
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	NVIC_SetPriority(UART0_IRQn, 1);						// set priority for UART interrupt - must be higher than step interrupt
 #else
 	NVIC_SetPriority(UART_IRQn, 1);							// set priority for UART interrupt - must be higher than step interrupt
@@ -1409,7 +1417,7 @@ void Platform::InitialiseInterrupts()
 	NVIC_SetPriority(STEP_TC_IRQN, 2);						// set high priority for this IRQ; it's time-critical
 	NVIC_EnableIRQ(STEP_TC_IRQN);
 
-#ifndef DUET_NG
+#if !defined(DUET_NG) && !defined(BOARDX)
 	// Timer interrupt to keep the networking timers running (called at 16Hz)
 	pmc_enable_periph_clk((uint32_t) NETWORK_TC_IRQN);
 	tc_init(NETWORK_TC, NETWORK_TC_CHAN, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK2);
@@ -1440,7 +1448,7 @@ void Platform::InitialiseInterrupts()
 void Platform::DisableInterrupts()
 {
 	NVIC_DisableIRQ(STEP_IRQN);
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	NVIC_DisableIRQ(NETWORK_IRQN);
 #endif
 }
@@ -1459,7 +1467,7 @@ void Platform::Diagnostics(MessageType mtype)
 
 	// Print memory stats and error codes to USB and copy them to the current webserver reply
 	const char *ramstart =
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 			(char *) 0x20000000;
 #else
 			(char *) 0x20070000;
@@ -1476,7 +1484,7 @@ void Platform::Diagnostics(MessageType mtype)
 	// Show the up time and reason for the last reset
 	const uint32_t now = (uint32_t)Time();		// get up time in seconds
 	const char* resetReasons[8] = { "power up", "backup", "watchdog", "software",
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 	// On the SAM4E a watchdog reset may be reported as a user reset because of the capacitor on the NRST pin
 									"reset button or watchdog",
 #else
@@ -1493,7 +1501,7 @@ void Platform::Diagnostics(MessageType mtype)
 		memset(srdBuf, 0, sizeof(srdBuf));
 		int slot = -1;
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 		// Work around bug in ASF flash library: flash_read_user_signature calls a RAMFUNC wito7ut disabling interrupts first.
 		// This caused a crash (watchdog timeout) sometimes if we run M122 while a print is in progress
 		const irqflags_t flags = cpu_irq_save();
@@ -1658,7 +1666,7 @@ void Platform::DiagnosticTest(int d)
 
 	case (int)DiagnosticTestType::BusFault:
 		// Read from the "Undefined (Abort)" area
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 		(void)RepRap::ReadDword(reinterpret_cast<const char*>(0x20800000));
 #else
 		(void)RepRap::ReadDword(reinterpret_cast<const char*>(0x20200000));
@@ -2306,7 +2314,7 @@ void Platform::SetFanValue(size_t fan, float speed)
 	}
 }
 
-#if !defined(DUET_NG) && !defined(__RADDS__)
+#if !defined(DUET_NG) && !defined(__RADDS__) && !defined(BOARDX)
 
 // Enable or disable the fan that shares its PWM pin with the last heater. Called when we disable or enable the last heater.
 void Platform::EnableSharedFan(bool enable)
@@ -2332,7 +2340,7 @@ float Platform::GetFanRPM()
 
 bool Platform::FansHardwareInverted(size_t fanNumber) const
 {
-#if defined(DUET_NG) || defined(__RADDS__)
+#if defined(DUET_NG) || defined(__RADDS__) || defined(BOARDX)
 	return false;
 #else
 	// The cooling fan output pin gets inverted on a Duet 0.6 or 0.7.
@@ -2350,7 +2358,7 @@ void Platform::InitFans()
 
 	if (NUM_FANS > 1)
 	{
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 		// Set fan 1 to be thermostatic by default, monitoring all heaters except the default bed heater
 		fans[1].SetHeatersMonitored(0xFFFF & ~(1 << DefaultBedHeater));
 		fans[1].SetValue(1.0);												// set it full on
@@ -2733,6 +2741,8 @@ void Platform::SetBoardType(BoardType bt)
 		board = BoardType::DuetWiFi_10;
 #elif defined(DUET_NG) && defined(DUET_ETHERNET)
 		board = BoardType::DuetEthernet_10;
+#elif defined(BOARDX) && defined(AX7)
+		board = BoardType::AX7_10;
 #elif defined(__RADDS__)
 		board = BoardType::RADDS_15;
 #else
@@ -2766,6 +2776,8 @@ const char* Platform::GetElectronicsString() const
 	case BoardType::DuetWiFi_10:			return "Duet WiFi 1.0";
 #elif defined(DUET_NG) && defined(DUET_ETHERNET)
 	case BoardType::DuetEthernet_10:		return "Duet Ethernet 1.0";
+#elif defined(BOARDX) && defined(AX7)
+	case BoardType::AX7_10:		return "AX7 1.0";   
 #elif defined(__RADDS__)
 	case BoardType::RADDS_15:				return "RADDS 1.5";
 #else
@@ -2786,6 +2798,8 @@ const char* Platform::GetBoardString() const
 	case BoardType::DuetWiFi_10:			return "duetwifi10";
 #elif defined(DUET_NG) && defined(DUET_ETHERNET)
 	case BoardType::DuetEthernet_10:		return "duetethernet10";
+#elif defined(BOARDX) && defined(AX7)
+	case BoardType::AX7_10:		return "ax710";   
 #elif defined(__RADDS__)
 	case BoardType::RADDS_15:				return "radds15";
 #else
@@ -2826,7 +2840,7 @@ bool Platform::GetFirmwarePin(int logicalPin, PinAccess access, Pin& firmwarePin
 		   )
 		{
 			firmwarePin = COOLING_FAN_PINS[logicalPin - Fan0LogicalPin];
-#if !defined(DUET_NG) && !defined(__RADDS__)
+#if !defined(DUET_NG) && !defined(__RADDS__) && !defined(BOARDX)
 			invert = (board == BoardType::Duet_06 || board == BoardType::Duet_07);
 #endif
 		}

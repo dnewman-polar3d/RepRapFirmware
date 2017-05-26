@@ -26,6 +26,7 @@ const int8_t HEATERS = 7;						// The number of heaters in the machine; 0 is the
 const size_t MAX_AXES = 6;						// The maximum number of movement axes in the machine, usually just X, Y and Z, <= DRIVES
 const size_t MIN_AXES = 3;						// The minimum and default number of axes
 const size_t MaxExtruders = DRIVES - MIN_AXES;	// The maximum number of extruders
+#define MOTION_DRIVES_(a,b,c,d,e,f) { a,b,c,d,e,f }
 
 const size_t NUM_SERIAL_CHANNELS = 3;			// The number of serial IO channels (USB and two auxiliary UARTs)
 #define SERIAL_MAIN_DEVICE SerialUSB

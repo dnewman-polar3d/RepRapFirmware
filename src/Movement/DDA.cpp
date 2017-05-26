@@ -10,7 +10,7 @@
 #include "Platform.h"
 #include "Move.h"
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 # define DDA_MOVE_DEBUG	(1)
 #else
 // On the wired Duets we don't have enough RAM to support this

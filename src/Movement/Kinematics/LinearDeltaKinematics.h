@@ -12,7 +12,7 @@
 #include "Kinematics.h"
 #include "Libraries/Math/Matrix.h"
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 typedef double floatc_t;					// type of matrix element used for delta calibration
 #else
 // We are more memory-constrained on the SAM3X

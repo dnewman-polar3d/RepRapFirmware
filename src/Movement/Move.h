@@ -17,7 +17,7 @@
 #include "Kinematics/Kinematics.h"
 #include "DeltaProbe.h"
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(BOARDX)
 const unsigned int DdaRingLength = 30;
 #else
 // We are more memory-constrained on the SAM3X
