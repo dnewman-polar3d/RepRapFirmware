@@ -294,10 +294,10 @@ void Platform::Init()
 	ARRAY_INIT(gateWay, DefaultGateway);
 
 // TODO BOARDX ???
-#if defined(DUET_NG) && defined(DUET_WIFI)
+#if (defined(DUET_NG) || defined(__BOARDX__)) && defined(DUET_WIFI)
 	// The WiFi module has a unique MAC address, so we don't need a default
 	memset(macAddress, 0xFF, sizeof(macAddress));
-#elif defined(DUET_NG) && defined(DUET_ETHERNET)
+#elif (defined(DUET_NG) || defined(__BOARDX__)) && defined(DUET_ETHERNET)
 	// On the Duet Ethernet, use the unique chip ID as most of the MAC address.
 	// The unique ID is 128 bits long whereas the whole MAC address is only 48 bits, so we can't guarantee that each Duet Ethernet will get a unique MAC address this way.
 	{
@@ -413,7 +413,9 @@ void Platform::Init()
 	// Disable parallel writes to all pins. We re-enable them for the step pins.
 	PIOA->PIO_OWDR = 0xFFFFFFFF;
 	PIOB->PIO_OWDR = 0xFFFFFFFF;
+#ifdef ID_PIOC
 	PIOC->PIO_OWDR = 0xFFFFFFFF;
+#endif
 	PIOD->PIO_OWDR = 0xFFFFFFFF;
 
 	for (size_t drive = 0; drive < DRIVES; drive++)
@@ -515,17 +517,21 @@ void Platform::Init()
 #endif
 	ARRAY_INIT(tempSensePins, TEMP_SENSE_PINS);
 	ARRAY_INIT(heatOnPins, HEAT_ON_PINS);
+#ifndef NO_SPI_TEMPSENSORS
 	ARRAY_INIT(spiTempSenseCsPins, SpiTempSensorCsPins);
+#endif
 
 	configuredHeaters = (DefaultBedHeater >= 0) ? (1 << DefaultBedHeater) : 0;
 	heatSampleTicks = HEAT_SAMPLE_TIME * SecondsToMillis;
 
 	// Enable pullups on all the SPI CS pins. This is required if we are using more than one device on the SPI bus.
 	// Otherwise, when we try to initialise the first device, the other devices may respond as well because their CS lines are not high.
+#ifndef NO_SPI_TEMPSENSORS
 	for (size_t i = 0; i < MaxSpiTempSensors; ++i)
 	{
 		setPullup(SpiTempSensorCsPins[i], true);
 	}
+#endif
 
 	for (size_t heater = 0; heater < HEATERS; heater++)
 	{
@@ -637,6 +643,7 @@ void Platform::SetThermistorNumber(size_t heater, size_t thermistor)
 {
 	heaterTempChannels[heater] = thermistor;
 
+ #ifndef NO_SPI_TEMPSENSORS
 	// Initialize the associated SPI temperature sensor?
 	if (thermistor >= FirstThermocoupleChannel && thermistor < FirstThermocoupleChannel + MaxSpiTempSensors)
 	{
@@ -646,7 +653,7 @@ void Platform::SetThermistorNumber(size_t heater, size_t thermistor)
 	{
 		SpiTempSensors[thermistor - FirstRtdChannel].InitRtd(spiTempSenseCsPins[thermistor - FirstRtdChannel]);
 	}
-
+#endif
 	reprap.GetHeat().ResetFault(heater);
 }
 
@@ -703,10 +710,12 @@ void Platform::InitZProbe()
 		break;
 
 	case 6:
+#if (E0_AXIS + 1) < DRIVES
 		AnalogInEnableChannel(zProbeAdcChannel, false);
 		pinMode(zProbePin, INPUT_PULLUP);
 		pinMode(endStopPins[E0_AXIS + 1], INPUT_PULLUP);
 		pinMode(zProbeModulationPin, OUTPUT_LOW);		// we now set the modulation output high during probing only when using probe types 4 and higher
+#endif
 		break;
 
 	case 7:
@@ -1061,7 +1070,9 @@ void Platform::UpdateFirmware()
 	// Disable all PIO IRQs, because the core assumes they are all disabled when setting them up
 	PIOA->PIO_IDR = 0xFFFFFFFF;
 	PIOB->PIO_IDR = 0xFFFFFFFF;
+#ifdef ID_PIOC
 	PIOC->PIO_IDR = 0xFFFFFFFF;
+#endif
 	PIOD->PIO_IDR = 0xFFFFFFFF;
 #ifdef ID_PIOE
 	PIOE->PIO_IDR = 0xFFFFFFFF;
@@ -1612,7 +1623,9 @@ void Platform::InitialiseInterrupts()
 
 	NVIC_SetPriority(PIOA_IRQn, NvicPriorityPins);
 	NVIC_SetPriority(PIOB_IRQn, NvicPriorityPins);
+#ifdef ID_PIOC
 	NVIC_SetPriority(PIOC_IRQn, NvicPriorityPins);
+#endif
 	NVIC_SetPriority(PIOD_IRQn, NvicPriorityPins);
 #ifdef ID_PIOE
 	NVIC_SetPriority(PIOE_IRQn, NvicPriorityPins);
@@ -2052,6 +2065,7 @@ float Platform::GetTemperature(size_t heater, TemperatureError& err)
 		return BAD_ERROR_TEMPERATURE;
 	}
 
+#ifndef NO_SPI_TEMPSENSORS
 	if (IsThermocoupleChannel(heater))
 	{
 		// MAX31855 thermocouple chip
@@ -2067,6 +2081,7 @@ float Platform::GetTemperature(size_t heater, TemperatureError& err)
 		err = SpiTempSensors[heaterTempChannels[heater] - FirstRtdChannel].GetRtdTemperature(&temp);
 		return (err == TemperatureError::success) ? temp : BAD_ERROR_TEMPERATURE;
 	}
+#endif
 
 	err = TemperatureError::unknownChannel;
 	return BAD_ERROR_TEMPERATURE;
@@ -2422,6 +2437,13 @@ void Platform::UpdateMotorCurrent(size_t driver)
 		{
 			dacPiggy.setChannel(7-driver, current * 0.102);
 		}
+#elif defined(__BOARDX__)
+		if (driver < 4)
+		{
+			unsigned short pot = (unsigned short)((0.256*current*8.0*senseResistor + maxStepperDigipotVoltage/2)/maxStepperDigipotVoltage);
+			mcpDuet.setNonVolatileWiper(potWipes[driver], pot);
+			mcpDuet.setVolatileWiper(potWipes[driver], pot);
+		}
 #else
 		unsigned short pot = (unsigned short)((0.256*current*8.0*senseResistor + maxStepperDigipotVoltage/2)/maxStepperDigipotVoltage);
 		if (driver < 4)
@@ -2431,7 +2453,7 @@ void Platform::UpdateMotorCurrent(size_t driver)
 		}
 		else
 		{
-# ifndef DUET_NG
+# ifdef DUET_NG
 			if (board == BoardType::Duet_085)
 			{
 # endif

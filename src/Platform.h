@@ -765,8 +765,10 @@ private:
 	Pin tempSensePins[HEATERS];
 	Pin heatOnPins[HEATERS];
 	Thermistor thermistors[HEATERS];
+#ifndef NO_SPI_TEMPSENSORS
 	TemperatureSensor SpiTempSensors[MaxSpiTempSensors];
 	Pin spiTempSenseCsPins[MaxSpiTempSensors];
+#endif
 	uint32_t configuredHeaters;										// bitmask of all heaters in use
 	uint32_t heatSampleTicks;
 
@@ -1214,12 +1216,14 @@ inline uint16_t Platform::GetRawZProbeReading() const
 	case 5:
 		return (ReadPin(zProbePin)) ? 4000 : 0;
 
+#if (E0_AXIS + 1) < DRIVES
 	case 6:
 		{
 			const bool b = ReadPin(endStopPins[E0_AXIS + 1]);
 			return (b) ? 4000 : 0;
 		}
-
+#endif
+		
 	default:
 		return min<uint16_t>(AnalogInReadChannel(zProbeAdcChannel), 4000);
 	}
