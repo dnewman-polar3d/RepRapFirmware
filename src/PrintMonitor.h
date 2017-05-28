@@ -25,7 +25,7 @@ Licence: GPL
 const FilePosition GCODE_HEADER_SIZE = 8192uL;		// How many bytes to read from the header
 const FilePosition GCODE_FOOTER_SIZE = 400000uL;	// How many bytes to read from the footer
 
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 const size_t GCODE_READ_SIZE = 4096;				// How many bytes to read in one go in GetFileInfo() (should be a multiple of 512 for read efficiency)
 #else
 const size_t GCODE_READ_SIZE = 1024;				// How many bytes to read in one go in GetFileInfo() (should be a multiple of 512 for read efficiency)

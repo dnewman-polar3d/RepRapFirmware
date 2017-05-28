@@ -69,6 +69,7 @@ const float BAD_LOW_TEMPERATURE = -10.0;			// Celsius
 const float DefaultExtruderTemperatureLimit = 288.0; // Celsius - E3D say to tighten the hot end at 285C
 const float DefaultBedTemperatureLimit = 125.0;		// Celsius
 const float HOT_END_FAN_TEMPERATURE = 45.0;			// Temperature at which a thermostatic hot end fan comes on
+const float ThermostatHysteresis = 1.0;				// How much hysteresis we use to prevent noise turning fans on/off too often
 const float BAD_ERROR_TEMPERATURE = 2000.0;			// Must exceed any reasonable 5temperature limit including DEFAULT_TEMPERATURE_LIMIT
 
 // Heating model default parameters. For the chamber heater, we use the same values as for the bed heater.
@@ -112,7 +113,7 @@ const unsigned int DefaultPinWritePwmFreq = 500;	// default PWM frequency for M4
 // - Each probe point uses 12 bytes of static RAM. So 16 points use 192 bytes
 // - The delta calibration points use the same static ram, but when auto-calibrating we temporarily need another 44 bytes per calibration point to hold the matrices etc.
 //   So 16 points need 704 bytes of stack space.
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 const size_t MaxGridProbePoints = 441;				// 441 allows us to probe e.g. 400x400 at 20mm intervals
 const size_t MaxXGridPoints = 41;					// Maximum number of grid points in one X row
 const size_t MaxProbePoints = 64;					// Maximum number of G30 probe points
@@ -150,7 +151,7 @@ const size_t FILENAME_LENGTH = 100;
 
 // Output buffer lengths
 
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 const uint16_t OUTPUT_BUFFER_SIZE = 256;			// How many bytes does each OutputBuffer hold?
 const size_t OUTPUT_BUFFER_COUNT = 32;				// How many OutputBuffer instances do we have?
 const size_t RESERVED_OUTPUT_BUFFERS = 1;			// Number of reserved output buffers after long responses. Must be enough for an HTTP header

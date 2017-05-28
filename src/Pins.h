@@ -8,9 +8,12 @@
 #  if defined(__RADDS__)
 #   define PLATFORM RADDS
 #   define PLATFORM_DIR RADDS
+#  elif defined(__ALLIGATOR__)
+#	 define PLATFORM Alligator
+#    define PLATFORM_DIR Alligator
 #  else
 #   define PLATFORM Duet
-#   define PLAFTFORM_DIR Duer
+#   define PLAFTFORM_DIR Duet
 #  endif
 # elif defined(__SAM4E8E__) || defined(__SAM4E8C__)
 #  if defined(DUET_NG)

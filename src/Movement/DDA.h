@@ -12,7 +12,7 @@
 #include "DriveMovement.h"
 #include "GCodes/GCodes.h"			// for class RawMove
 
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 #define DDA_LOG_PROBE_CHANGES	1
 #else
 #define DDA_LOG_PROBE_CHANGES	0		// save memory on the wired Duet
@@ -56,7 +56,6 @@ public:
 	DDA* GetNext() const { return next; }
 	DDA* GetPrevious() const { return prev; }
 	int32_t GetTimeLeft() const;
-	float GetMotorPosition(size_t drive) const;						// Get the real mm position of a motor at the planned endpoint of this move
 	const int32_t *DriveCoordinates() const { return endPoint; }	// Get endpoints of a move in machine coordinates
 	void SetDriveCoordinate(int32_t a, size_t drive);				// Force an end point
 	void SetFeedRate(float rate) { requestedSpeed = rate; }
@@ -77,7 +76,7 @@ public:
 	// the calculation can just be managed in time at speeds of 15000mm/min (step interval 50us), but not at 20000mm/min (step interval 37.5us).
 	// Therefore, where the step interval falls below 60us, we don't calculate on every step.
 	// Note: the above measurements were taken some time ago, before some firmware optimisations.
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 	static const int32_t MinCalcIntervalDelta = (40 * stepClockRate)/1000000; 		// the smallest sensible interval between calculations (40us) in step timer clocks
 	static const int32_t MinCalcIntervalCartesian = (40 * stepClockRate)/1000000;	// same as delta for now, but could be lower
 	static const uint32_t minInterruptInterval = 6;					// about 2us minimum interval between interrupts, in clocks

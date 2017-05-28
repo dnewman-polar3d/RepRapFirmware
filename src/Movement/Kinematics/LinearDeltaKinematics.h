@@ -12,7 +12,7 @@
 #include "Kinematics.h"
 #include "Libraries/Math/Matrix.h"
 
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 typedef double floatc_t;					// type of matrix element used for delta calibration
 #else
 // We are more memory-constrained on the SAM3X
@@ -43,8 +43,8 @@ public:
 	float GetTiltCorrection(size_t axis) const override;
 	bool IsReachable(float x, float y) const override;
 	void LimitPosition(float coords[], size_t numAxes, uint16_t axesHomed) const override;
+	void GetAssumedInitialPosition(size_t numAxes, float positions[]) const override;
 	uint16_t AxesToHomeBeforeProbing() const override { return (1 << X_AXIS) | (1 << Y_AXIS) | (1 << Z_AXIS); }
-	bool ShowCoordinatesWhenNotHomed() const override { return false; }
 
     // Public functions specific to this class
 	float GetDiagonalSquared() const { return D2; }

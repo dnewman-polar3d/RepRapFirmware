@@ -10,7 +10,7 @@
 #include "Platform.h"
 #include "Move.h"
 
-#if defined(DUET_NG) || defined(BOARDX)
+#if defined(DUET_NG) || defined(__BOARDX__)
 # define DDA_MOVE_DEBUG	(1)
 #else
 // On the wired Duets we don't have enough RAM to support this
@@ -397,11 +397,6 @@ bool DDA::Init(const GCodes::RawMove &nextMove, bool doMotorMapping)
 	RecalculateMove();
 	state = provisional;
 	return true;
-}
-
-float DDA::GetMotorPosition(size_t drive) const
-{
-	return Move::MotorEndpointToPosition(endPoint[drive], drive);
 }
 
 // Return true if this move is or might have been intended to be a deceleration-only move
@@ -934,7 +929,7 @@ void DDA::Prepare()
 					DebugPrint();
 				}
 			}
-			else if (isDeltaMovement)
+			else if (isDeltaMovement && drive < DELTA_AXES)			// for now, additional axes are assumed to be not part of the delta mechanism
 			{
 				dm.PrepareDeltaAxis(*this, params);
 
