@@ -17,7 +17,6 @@ GPL v3
 #include <stdio.h>
 #include <Wire.h>
 
-// TODO BOARDX Wire == SDA0 / SCL0 ??
 #if defined(DUET_NG) || defined(AX7)
 # define MCP_WIRE	Wire
 #else
