@@ -5,6 +5,8 @@
  *      Author: David
  */
 
+#if !defined(__BOARDX__)
+
 #include "RepRapFirmware.h"
 #include "TMC2660.h"
 
@@ -438,6 +440,4 @@ namespace TMC2660
 
 // End
 
-
-
-
+#endif // !defined(__BOARDX__)

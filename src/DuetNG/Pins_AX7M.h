@@ -27,8 +27,13 @@ const size_t DRIVES = 4;						// The number of drives in the machine, including 
 const int8_t HEATERS = 2;						// The number of heaters in the machine; 0 is the heated bed even if there isn't one
 #define HEATERS_(a,b,c,d,e,f,g,h) { a,b }
 const size_t MaxDriversPerAxis = 4;				// The maximum number of stepper drivers assigned to one axis
+const unsigned int FirstVirtualHeater = 100;
+const unsigned int NumVirtualHeaters = 0;		// no virtual heaters on RADDS
 
 const size_t MAX_AXES = 3;						// The maximum number of movement axes in the machine, usually just X, Y and Z, <= DRIVES
+// Initialization macro used in statements needing to initialize values in arrays of size MAX_AXES
+#define AXES_(a,b,c,d,e,f) { a,b,c }
+
 const size_t MIN_AXES = 3;						// The minimum and default number of axes
 const size_t MaxExtruders = DRIVES - MIN_AXES;	// The maximum number of extruders
 #define MOTION_DRIVES_(a,b,c,d,e,f) { a,b,c }
@@ -77,7 +82,10 @@ const float THERMISTOR_SERIES_RS = 4700.0;
 
 // Number of SPI temperature sensors to support
 
+#define NO_SPI_TEMPSENSORS 1
 const size_t MaxSpiTempSensors = 0;
+const Pin SpiTempSensorCsPins[1] = { NoPin };
+
 
 // Arduino Due pin number that controls the ATX power on/off
 const Pin ATX_POWER_PIN = -1;											// Arduino Due pin number that controls the ATX power on/off

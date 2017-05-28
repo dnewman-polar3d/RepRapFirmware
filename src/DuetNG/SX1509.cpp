@@ -21,6 +21,8 @@ local, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
 
+#if !defined(__BOARDX__)
+
 #include "Core.h"
 #include "Wire.h"
 #include "SX1509.h"
@@ -780,3 +782,5 @@ void SX1509::writeBytes(uint8_t firstRegisterAddress, uint8_t * writeArray, uint
 }
 
 // End
+
+#endif // !defined(__BOARDX__)

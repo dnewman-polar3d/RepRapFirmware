@@ -5,6 +5,8 @@
  *      Author: David
  */
 
+#if !defined(__BOARDX__)
+
 #include "DueXn.h"
 #include "SX1509.h"
 #include "Platform.h"
@@ -183,3 +185,5 @@ namespace DuetExpansion
 }			// end namespace
 
 // End
+
+#endif // !defined(__BOARDX__)
