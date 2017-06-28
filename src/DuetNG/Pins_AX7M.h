@@ -105,7 +105,7 @@ const Pin COOLING_FAN_RPM_PIN = NoPin;
 const size_t NumSdCards = 1;
 const Pin SdCardDetectPins[NumSdCards] = { 41 };						// PD9
 const Pin SdWriteProtectPins[NumSdCards] = { NoPin };
-const Pin SdSpiCSPins[1] = {56};
+const Pin SdSpiCSPins[1] = { 28 };
 
 // M42 and M208 commands now use logical pin numbers, not firmware pin numbers.
 // This next definition defines the highest one.
